@@ -1,0 +1,27 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# virtual env
+.venv
+venv
+
+# git
+.git
+.gitignore
+
+# editor
+.vscode
+.idea
+
+# tests
+tests
+
+# cache
+.pytest_cache
+.mypy_cache
+
+# OS
+.DS_Store
