@@ -88,10 +88,9 @@ Create Kubernetes resources:
 
 Commands learned:
 
-
-kubectl logs
-kubectl describe
-kubectl exec
+- kubectl logs
+- kubectl describe
+- kubectl exec
 
 ---
 
