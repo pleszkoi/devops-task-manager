@@ -42,7 +42,7 @@ class Settings(BaseSettings):
 
     app_name: str = "devops-task-manager"
     app_env: str = "dev"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
 
 # settings objektum
 # Ez létrehozza a konfiguráció példányát.
