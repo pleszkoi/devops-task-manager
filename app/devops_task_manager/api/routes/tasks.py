@@ -20,23 +20,28 @@ from fastapi import APIRouter, HTTPException
 from devops_task_manager.models.task import TaskCreate, TaskUpdate, TaskOut
 from devops_task_manager.services.task_service import TaskService
 
+# TaskRepoDB:
+# A PostgreSQL-es repository.
+# 
+# SessionLocal
+# A database.py-ból jön.
+
+from devops_task_manager.repositories.task_repo_db import TaskRepoDB
+from devops_task_manager.core.database import SessionLocal
+
 # Router létrehozása
 # prefix="/api/v1/tasks" -> Ez azt jelenti, hogy az összes alatta lévő endpoint automatikusan ezzel a prefixszel indul.
 # tags=["tasks"] -> Ez főleg a Swagger UI-ban fontos. A /docs oldalon a route-ok csoportosítva jelennek meg tasks név alatt.
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
-# Ez egy segédfüggvény. Visszaadja a globális task_service példányt a main.py-ból.
-
 def get_service() -> TaskService:
 
-    # Egyszerű dependency megoldás Week1-re.
-    # Week2-ben DI + DB repo jön.
-    # A main.py-ban van: task_service = TaskService(TaskRepoMemory())
-    # Tehát ez az egyetlen service példány él az appban.
+    # Ez egy session gyár: így lesz belőle konkrét DB session.
 
-    from devops_task_manager.main import task_service
-    return task_service
+    db = SessionLocal()
+    repo = TaskRepoDB(db)
+    return TaskService(repo)
 
 # A task lista endpoint.
 # @router.get("") jelentése: 
@@ -50,34 +55,68 @@ def get_service() -> TaskService:
 @router.get("", response_model=list[TaskOut])
 def list_tasks():
 
-    # A service-ből elkéri az összes taskot, és visszaadja. A service végül a repository list() metódusához jut.
+    # Itt nyílik egy új DB session.
+    
+    db = SessionLocal()
 
-    return get_service().list_tasks()
+    # Ez azért kell, hogy a session biztosan lezáruljon, akkor is, ha közben hiba történik.
+    try:
+        # Itt rögtön felépítjük a láncot:
+        # Session
+        # ↓
+        # TaskRepoDB
+        # ↓
+        # TaskService
+
+        service = TaskService(TaskRepoDB(db))
+        return service.list_tasks()
+    
+    # Ez garantálja, hogy a session bezárul.
+    finally:
+        db.close()
 
 # A task létrehozó endpoint.
 # A 201 jelentése: resource created. Ez REST API szempontból helyesebb, mint a 200.
 
 @router.post("", response_model=TaskOut, status_code=201)
+
+# data: TaskCreate -> A request body automatikusan TaskCreate modellé alakul.
+
 def create_task(data: TaskCreate):
-    return get_service().create_task(data)
+    db = SessionLocal()
+    try:
+        service = TaskService(TaskRepoDB(db))
+        return service.create_task(data)
+    finally:
+        db.close()
 
 # Egy konkrét task lekérdezése.
 
 @router.get("/{task_id}", response_model=TaskOut)
 def get_task(task_id: int):
-    task = get_service().get_task(task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
+    db = SessionLocal()
+    try:
+        service = TaskService(TaskRepoDB(db))
+        task = service.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return task
+    finally:
+        db.close()
 
 # A task frissítése.
 
 @router.put("/{task_id}", response_model=TaskOut)
 def update_task(task_id: int, data: TaskUpdate):
-    task = get_service().update_task(task_id, data)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
+    db = SessionLocal()
+    try:
+        service = TaskService(TaskRepoDB(db))
+        task = service.update_task(task_id, data)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return task
+    finally:
+        db.close()
 
 # A task törlése.
 # A 204 jelentése: No Content. Ez nagyon tipikus DELETE válasz.
@@ -85,10 +124,25 @@ def update_task(task_id: int, data: TaskUpdate):
 
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: int):
-    ok = get_service().delete_task(task_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return None
+    db = SessionLocal()
+    try:
+        service = TaskService(TaskRepoDB(db))
+        ok = service.delete_task(task_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return None
+    finally:
+        db.close()
+
+# A tasks.py most:
+#  - HTTP route-okat definiál
+#  - request body-t validál
+#  - response modelt definiál
+#  - hibákat HTTP státuszkódra fordít
+#  - requestenként DB sessiont nyit
+#  - a service rétegen keresztül a repositoryt hívja
+#  - a végén lezárja a sessiont
+
 
 # A route réteg feladatai:
 #  - HTTP method hozzárendelés

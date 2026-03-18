@@ -1,7 +1,10 @@
 # Ez vezeti be a 12-factor app konfigurációs modellt
+# Vagyis: A konfiguráció a környezetből jön, nem a kódba van égetve
 
-# BaseSettings: egy speciális Pydantic osztály.
+# BaseSettings: egy speciális Pydantic osztály, ami konfiguráció kezelésre való.
 #
+# A lényege, hogy nem kézzel kell os.getenv()-ezni minden értéket, hanem egy konfigurációs osztályból dolgozol
+
 # A BaseSettings képes:
 #  - környezeti változókból olvasni
 #  - .env fájlból olvasni
@@ -11,47 +14,77 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Settings: egy konfigurációs objektum.
-# A FastAPI app minden konfigurációját itt fogjuk tárolni.
+# Ez az alkalmazás központi konfigurációs objektuma.
 
-# Ez lesz például:
-#  - app neve
-#  - environment
-#  - verzió
-#  - később database URL
-#  - log level
-#  - feature flag-ek
+# A szerepe:
+#  - összegyűjti az app configot egy helyre
+#  - típusosan leírja a mezőket
+#  - env varból fel tudja tölteni őket
+#  - később könnyen bővíthető
+# A projektben ez a konfigurációs központ.
 
 class Settings(BaseSettings):
 
-    # azt mondja a Pydanticnak: ne olvass .env fájlt
-    # Miért? Mert Kubernetesben a konfiguráció environment variable formában jön.
-    
-    model_config = SettingsConfigDict(env_file=None)
+    # Ez azt mondja: # ne próbálj .env fájlt olvasni
+    # 
+    # Kubernetesben a konfigurációt nem .env-ből akarjuk adni, hanem:
+    #  - env mezőből a Deployment YAML-ben
+    #  - később ConfigMapből
+    #  - Secretből
 
-    # Konfigurációs mezők:
-    # app_name: str = "devops-task-manager" -> egy Pydantic field
-    # str -> típus
-    # "devops-task-manager" -> default érték
-    #
-    # Ezek később hasznosak:
-    #  - logging
-    #  - monitoring
-    #  - debugging
-    #  - Kubernetes rollout
+    model_config = SettingsConfigDict(env_file=None)
 
     app_name: str = "devops-task-manager"
     app_env: str = "dev"
     app_version: str = "0.2.0"
 
-# settings objektum
+    # a PostgreSQL kapcsolat paraméterezése.
+
+    db_host: str = "localhost"
+    db_port: int = 5432
+    db_name: str = "taskdb"
+    db_user: str = "taskuser"
+    db_password: str = "taskpassword"
+
+    # A property azt jelenti: úgy használhatod, mintha attribútum lenne, de valójában egy függvény számolja ki
+
+    @property
+
+    # a database.py majd ezt használja: engine = create_engine(settings.database_url, ...)
+    # Tehát a teljes DB kapcsolat ezen a mezőn keresztül épül fel.
+
+    def database_url(self) -> str:
+
+        # pl.:     postgresql+psycopg://taskuser:taskpassword@localhost:5432/taskdb
+        # K8s-ben: postgresql+psycopg://taskuser:taskpassword@postgres:5432/taskdb
+        #
+        # postgresql+psycopg://
+        # Ez mondja a SQLAlchemynek:
+        #  - adatbázis típus: PostgreSQL
+        #  - driver: psycopg
+        # 
+        # {self.db_user}:{self.db_password}
+        # Felhasználónév és jelszó
+        #
+        # @{self.db_host}:{self.db_port}
+        # Host és port
+        # 
+        # /{self.db_name}
+        # A konkrét adatbázis neve.
+
+        return (
+            f"postgresql+psycopg://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
 # Ez létrehozza a konfiguráció példányát.
+#
+# Itt történik meg:
+#  - env varok beolvasása
+#  - default értékek alkalmazása
+#  - típusok validálása
+#  - a settings objektum létrejötte
 
-# Ez történik:
-#  - beolvassa az env varokat
-#  - alkalmazza a defaultokat
-#  - validálja a típusokat
-
-# Ezután bárhol importálható
+# Ezután bárhol importálható és használható
 
 settings = Settings()

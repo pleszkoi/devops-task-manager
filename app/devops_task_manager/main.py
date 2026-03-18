@@ -4,8 +4,7 @@
 
 from fastapi import FastAPI
 from devops_task_manager.core.config import settings
-from devops_task_manager.repositories.task_repo_memory import TaskRepoMemory
-from devops_task_manager.services.task_service import TaskService
+from devops_task_manager.core.database import Base, engine
 
 # A router as ... azt jelenti: router → health_router
 # Átnevezzük, mert minden route fájlban az objektum neve router, és így elkerüljük az ütközést.
@@ -14,14 +13,8 @@ from devops_task_manager.api.routes.health import router as health_router
 from devops_task_manager.api.routes.tasks import router as tasks_router
 from devops_task_manager.api.routes.debug import router as debug_router
 
-# "Singleton" service Week1-hez
-#
-# Service példány létrehozása
-#  - létrejön egy TaskRepoMemory()
-#  - ezt átadjuk a TaskService konstruktorának
-#  - a service eltárolja a repositoryt
 
-task_service = TaskService(TaskRepoMemory())
+Base.metadata.create_all(bind=engine)
 
 # FastAPI alkalmazás létrehozása
 # Memóriában:
@@ -54,7 +47,11 @@ def root():
     #  - verzió ellenőrzés
     #  - deployment ellenőrzés
 
-    return {"app": settings.app_name, "env": settings.app_env, "version": settings.app_version}
+    return {
+        "app": settings.app_name,
+        "env": settings.app_env,
+        "version": settings.app_version,
+    }
 
 # Routerek regisztrálása
 
