@@ -181,6 +181,132 @@ http://localhost:8080
 
 # Week 2 – Database + Storage (Stateful Workloads)
 
+## Goal
+
+Run PostgreSQL inside Kubernetes with persistent storage and connect the FastAPI application to it.
+
+---
+
+## What I Built
+
+- PostgreSQL deployed inside Kubernetes
+- Persistent storage using PVC (via k3s local-path provisioner)
+- FastAPI app connected to PostgreSQL using SQLAlchemy
+- Secrets used for database credentials
+- Health endpoints extended with database readiness check
+- Kubernetes readiness & liveness probes configured
+- PostgreSQL migrated from Deployment → StatefulSet
+- Headless Service introduced for stable network identity
+
+---
+
+## Kubernetes Concepts Learned
+
+### Persistent Storage
+
+- **PersistentVolume (PV)** – actual storage resource
+- **PersistentVolumeClaim (PVC)** – request for storage
+- **StorageClass** – dynamic provisioning (k3s `local-path`)
+
+Result: data persists even if pods restart
+
+---
+
+### Stateful vs Stateless
+
+| Stateless (Week 1) | Stateful (Week 2) |
+|------------------|------------------|
+| Pods are interchangeable | Pods have identity |
+| No data persistence | Persistent storage |
+| Deployment | StatefulSet |
+
+---
+
+### PostgreSQL as Stateful Workload
+
+- Switched from `Deployment` → `StatefulSet`
+- Stable pod identity:
+
+```bash
+postgres-0
+```
+
+- Persistent data stored in PVC
+- Database survives pod restarts
+
+---
+
+### Headless Service
+
+Converted PostgreSQL service to:
+
+```yaml
+clusterIP: None
+```
+
+This enables:
+
+- Direct pod DNS resolution:
+
+```bash
+postgres-0.postgres.task-manager.svc.cluster.local
+```
+
+- No load balancing (important for databases)
+- Stable network identity
+
+## Health Checks (Production Pattern)
+
+**Liveness**
+
+```bash
+/health
+```
+
+- Checks if app is running
+- Kubernetes restarts container if it fails
+
+**Readiness**
+
+```bash
+/ready
+```
+
+- Checks DB connectivity (SELECT 1)
+- Removes pod from traffic if DB is unavailable
+
+## Configuration & Secrets
+
+Database connection is configured via environment variables:
+- DB_HOST
+- DB_PORT
+- DB_NAME
+- DB_USER
+- DB_PASSWORD
+
+Sensitive values are stored in Kubernetes ```Secret```.
+
+## What I Verified
+
+- Data persists after:
+  - pod restart
+  - deployment rollout
+- Application reconnects to database
+- Readiness probe blocks traffic when DB is unavailable
+- Service routing works across multiple replicas
+
+## Architecture (Week 2)
+
+FastAPI (stateless)
+        ↓
+Service (ClusterIP)
+        ↓
+Pods (replicas)
+        ↓
+PostgreSQL (StatefulSet)
+        ↓
+PVC → Persistent storage
+
 # Week 3 – Networking + Ingress + TLS
 
 # Week 4 – CI/CD Pipeline
