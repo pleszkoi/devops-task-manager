@@ -297,15 +297,15 @@ Sensitive values are stored in Kubernetes ```Secret```.
 
 ## Architecture (Week 2)
 
-FastAPI (stateless)
-        ↓
-Service (ClusterIP)
-        ↓
-Pods (replicas)
-        ↓
-PostgreSQL (StatefulSet)
-        ↓
-PVC → Persistent storage
+FastAPI (stateless)  
+        ↓  
+Service (ClusterIP)  
+        ↓  
+Pods (replicas)  
+        ↓  
+PostgreSQL (StatefulSet)  
+        ↓  
+PVC → Persistent storage  
 
 # Week 3 – Networking + Ingress + TLS
 
