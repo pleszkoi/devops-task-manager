@@ -1,6 +1,5 @@
-# Mióta a 43-postgres-statefulset.yaml-re váltás megtörtént, ez a yaml fájl nincs használva
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 
 metadata:
   name: postgres
@@ -9,6 +8,7 @@ metadata:
     app: postgres
 
 spec:
+  serviceName: postgres
   replicas: 1
 
   selector:
