@@ -309,6 +309,119 @@ PVC → Persistent storage
 
 # Week 3 – Networking + Ingress + TLS
 
+## Goal
+Expose the FastAPI application outside the cluster using Ingress and secure it with HTTPS (TLS).
+
+---
+
+## What I Built
+
+- Exposed the application via Kubernetes **Ingress**
+- Used **Traefik (k3s default Ingress Controller)**
+- Configured **host-based routing** (`api.localhost`)
+- Implemented **TLS with self-signed certificate**
+- Verified full request flow from browser → backend → database
+- Integrated health endpoints with real traffic
+
+---
+
+## Service vs Ingress
+
+| Service | Ingress |
+|--------|--------|
+| Internal cluster access | External HTTP/HTTPS access |
+| Routes to pods | Routes to services |
+| Works on TCP level | Works on HTTP/HTTPS level |
+
+---
+
+## Ingress
+
+An Ingress defines how external HTTP/HTTPS traffic reaches services inside the cluster.
+
+Example:
+
+```text
+api.localhost → task-manager Service → FastAPI pods
+```
+
+Important:
+
+- Ingress itself is only a declarative rule
+- A controller (Traefik) is required to apply it
+
+Traefik (Ingress Controller):
+
+- Watches Kubernetes resources (Ingress, Services, Secrets)
+- Dynamically builds routing configuration
+- Handles incoming HTTP/HTTPS traffic
+
+## TLS (HTTPS)
+
+Generated a Self-Signed Certificate for:
+
+```text
+api.localhost
+```
+
+Used to secure traffic via HTTPS.
+
+## Kubernetes TLS Secret
+
+Created a secret:
+
+```text
+task-manager-tls
+```
+
+Used by Ingress for TLS termination.
+
+## TLS Termination
+
+TLS is handled at the Ingress level (Traefik):
+
+HTTPS request 
+↓ 
+Traefik (TLS termination) 
+↓ 
+HTTP to Service 
+↓ 
+FastAPI 
+
+## Health Checks in Real Traffic
+
+Verified endpoints through Ingress:
+
+- /health → application alive
+- /ready → database connectivity check
+
+Example:
+
+```bash
+curl -k https://api.localhost/health
+curl -k https://api.localhost/ready
+```
+
+## Architecture (Week 3)
+
+User (Browser / Curl) 
+        ↓ 
+DNS (api.localhost) 
+        ↓ 
+Traefik (Ingress Controller) 
+        ↓ 
+TLS Termination 
+        ↓ 
+Ingress Rule (Host-based routing) 
+        ↓ 
+Service (ClusterIP) 
+        ↓ 
+FastAPI Pods 
+        ↓ 
+PostgreSQL (StatefulSet) 
+        ↓ 
+Persistent Volume 
+
 # Week 4 – CI/CD Pipeline
 
 # Week 5 – Helm & Structured Deployments
