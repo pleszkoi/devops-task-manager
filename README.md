@@ -307,6 +307,8 @@ PostgreSQL (StatefulSet)
         ↓  
 PVC → Persistent storage  
 
+---
+
 # Week 3 – Networking + Ingress + TLS
 
 ## Goal
@@ -380,13 +382,13 @@ Used by Ingress for TLS termination.
 
 TLS is handled at the Ingress level (Traefik):
 
-HTTPS request 
-↓ 
-Traefik (TLS termination) 
-↓ 
-HTTP to Service 
-↓ 
-FastAPI 
+HTTPS request  
+↓  
+Traefik (TLS termination)  
+↓  
+HTTP to Service  
+↓  
+FastAPI  
 
 ## Health Checks in Real Traffic
 
@@ -404,23 +406,23 @@ curl -k https://api.localhost/ready
 
 ## Architecture (Week 3)
 
-User (Browser / Curl) 
-        ↓ 
-DNS (api.localhost) 
-        ↓ 
-Traefik (Ingress Controller) 
-        ↓ 
-TLS Termination 
-        ↓ 
-Ingress Rule (Host-based routing) 
-        ↓ 
-Service (ClusterIP) 
-        ↓ 
-FastAPI Pods 
-        ↓ 
-PostgreSQL (StatefulSet) 
-        ↓ 
-Persistent Volume 
+User (Browser / Curl)  
+        ↓  
+DNS (api.localhost)  
+        ↓  
+Traefik (Ingress Controller)  
+        ↓  
+TLS Termination  
+        ↓  
+Ingress Rule (Host-based routing)  
+        ↓  
+Service (ClusterIP)  
+        ↓  
+FastAPI Pods  
+        ↓  
+PostgreSQL (StatefulSet)  
+        ↓  
+Persistent Volume  
 
 # Week 4 – CI/CD Pipeline
 
