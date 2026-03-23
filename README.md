@@ -424,6 +424,8 @@ PostgreSQL (StatefulSet)
         ↓  
 Persistent Volume  
 
+---
+
 # Week 4 – CI/CD Pipeline
 
 # Week 5 – Helm & Structured Deployments
