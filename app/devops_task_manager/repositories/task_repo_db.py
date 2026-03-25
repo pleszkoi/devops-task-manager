@@ -17,15 +17,7 @@ class TaskRepoDB:
         # SELECT * FROM tasks;
 
         tasks = self.db.query(TaskDB).all()
-        return [
-            TaskOut(
-                id=t.id,
-                title=t.title,
-                description=t.description,
-                status=t.status,
-            )
-            for t in tasks
-        ]
+        return [TaskOut.model_validate(t) for t in tasks]
 
     def get(self, task_id: int) -> TaskOut | None:
 
@@ -35,12 +27,7 @@ class TaskRepoDB:
         if not task:
             return None
 
-        return TaskOut(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-        )
+        return TaskOut.model_validate(task)
 
     def create(self, data: TaskCreate) -> TaskOut:
         
@@ -64,12 +51,7 @@ class TaskRepoDB:
 
         self.db.refresh(task)
 
-        return TaskOut(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-        )
+        return TaskOut.model_validate(task)
 
     def update(self, task_id: int, data: TaskUpdate) -> TaskOut | None:
         task = self.db.query(TaskDB).filter(TaskDB.id == task_id).first()
@@ -91,12 +73,7 @@ class TaskRepoDB:
         
         self.db.refresh(task)
 
-        return TaskOut(
-            id=task.id,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-        )
+        return TaskOut.model_validate(task)
 
     def delete(self, task_id: int) -> bool:
         task = self.db.query(TaskDB).filter(TaskDB.id == task_id).first()

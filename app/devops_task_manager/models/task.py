@@ -22,8 +22,10 @@
 #  - default értéket adni
 #  - metadata-t megadni
 
+# ConfigDict: a Pydantic v2 config rendszere.
+
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # Enum osztály
 # class TaskStatus(Enum): -> JSON-ben: TaskStatus.todo -> Nem API barát
@@ -77,6 +79,13 @@ class TaskUpdate(BaseModel):
 # Amikor a FastAPI visszaad adatot: response_model=TaskOut akkor ezt a struktúrát használja.
 
 class TaskOut(BaseModel):
+    # Ez a modell viselkedését állítja.
+    # from_attributes=True:
+    # Engedélyezi, hogy TaskOut.model_validate(task) működjön akkor is, ha task nem dict, hanem objektum.
+    # Lehetővé teszi, hogy a Pydantic modellek közvetlenül SQLAlchemy objektumokból épüljenek fel manuális mezőmásolás nélkül.
+    # A task_repo_db.py-ban működni fog a return TaskOut.model_validate(task)
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
     description: str | None

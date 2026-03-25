@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     app_name: str = "devops-task-manager"
     app_env: str = "dev"
-    app_version: str = "0.2.0"
+    app_version: str = "0.4.0"
 
     # a PostgreSQL kapcsolat paraméterezése.
 

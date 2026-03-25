@@ -7,11 +7,8 @@
 #  - több repository összehangolása
 #  - tranzakciók
 
-# TaskRepoMemory
-# Ez az adatkezelő réteg. A service nem maga tárol adatot, hanem a repositoryt használja.
-
 from devops_task_manager.models.task import TaskCreate, TaskUpdate, TaskOut
-from devops_task_manager.repositories.task_repo_memory import TaskRepoMemory
+from devops_task_manager.repositories.interfaces import TaskRepository
 
 # A service réteg.
 # A szerepe:
@@ -20,15 +17,9 @@ from devops_task_manager.repositories.task_repo_memory import TaskRepoMemory
 
 class TaskService:
 
-    # A TaskService egy repository példányt kap induláskor.
-    # Példa a main.py-ból:
-    # task_service = TaskService(TaskRepoMemory())
-    #  - létrejön egy TaskRepoMemory
-    #  - átadjuk a TaskService-nek
-    #  - a service eltárolja ezt self.repo néven
-    # Ez azért jó, mert a service nincs “beleragasztva” a konkrét adattárolásba.
-
-    def __init__(self, repo: TaskRepoMemory) -> None:
+    # Ez azt jelenti, hogy bármilyen objektum jöhet, ami megfelel a TaskRepository szerződésnek
+    
+    def __init__(self, repo: TaskRepository) -> None:
         self.repo = repo
 
     # A service lista metódusa. Egyszerűen továbbhívja a repository list() metódusát.

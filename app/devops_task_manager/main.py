@@ -2,6 +2,15 @@
 # A FastAPI objektum reprezentálja az egész webalkalmazást.
 # Minden route, middleware, config ehhez az objektumhoz tartozik.
 
+# a Python beépített modulja, amivel többek között környezeti változókat lehet olvasni.
+import os
+
+# Az asynccontextmanager egy dekorátor, amivel olyan függvényt írhatsz, ami:
+#  - belépési logikát futtat,
+#  - aztán átadja a vezérlést,
+#  - majd kilépési logikát futtat.
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from devops_task_manager.core.config import settings
 from devops_task_manager.core.database import Base, engine
@@ -13,8 +22,24 @@ from devops_task_manager.api.routes.health import router as health_router
 from devops_task_manager.api.routes.tasks import router as tasks_router
 from devops_task_manager.api.routes.debug import router as debug_router
 
+# dekorátor
+# Azt mondja, hogy az alatta lévő függvény ne egyszerű async függvényként működjön, hanem egy aszinkron context managerként.
+# Ez kell ahhoz, hogy a FastAPI lifespan= paraméterrel használni tudja.
+# Ez teszi alkalmassá a lifespan() függvényt arra, hogy a FastAPI indulás/leállás kezelésére használja.
+@asynccontextmanager
+async def lifespan(app: FastAPI):
 
-Base.metadata.create_all(bind=engine)
+    # Megnézi, hogy létezik-e INIT_DB nevű env var.
+    # ha nincs beállítva, akkor "true" lesz az eredmény,
+    # ha INIT_DB=false, akkor "false" lesz az eredmény.
+
+    if os.getenv("INIT_DB", "true").lower() == "true":
+        Base.metadata.create_all(bind=engine)
+    # a yield előtti rész az induláskor fut le,
+    # a yield után “átadod” az alkalmazást normál futásra,
+    # a yield utáni rész leálláskor futna le.
+    # Ebben az esetben nincs shutdown logika, ezért a yield után nincs semmi.
+    yield
 
 # FastAPI alkalmazás létrehozása
 # Memóriában:
@@ -28,7 +53,12 @@ Base.metadata.create_all(bind=engine)
 #
 # A paraméterek a Swagger UI-ban jelennek meg.
 
-app = FastAPI(title=settings.app_name, version=settings.app_version)
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    # Ezzel lehet megmondani a FastAPI-nak, hogy az alkalmazás életciklusát a lifespan() függvény kezelje
+    lifespan=lifespan,
+)
 
 # Root endpoint
 #
