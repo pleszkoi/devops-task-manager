@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: pleszkoi/devops-task-manager:0.3.1
+          image: pleszkoi/devops-task-manager:0.4.0
           ports:
             - containerPort: 8000
           env:
@@ -29,6 +29,8 @@ spec:
               value: postgres
             - name: DB_PORT
               value: "5432"
+            - name: APP_VERSION
+              value: "0.4.0"
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
