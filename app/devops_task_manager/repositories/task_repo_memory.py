@@ -1,5 +1,3 @@
-# A jelenlegi app adat-tároló rétege: most memóriában tárol, később ugyanennek a szerepét veszi át a DB-s repository.
-
 # Dict: Típusannotációhoz kell. Python 3.9+ óta lehetne dict[int, TaskOut] is, de a Dict még gyakori.
 # Modellek importja:
 #  - TaskCreate: amit a POST request body-ból kapsz
